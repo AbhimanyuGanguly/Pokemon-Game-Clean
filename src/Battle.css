@@ -1,10 +1,9 @@
 body {
-  position: relative;
   margin: 0;
   padding: 0;
-  font-family: 'Pokemon Solid', sans-serif;
   min-height: 100vh;
   overflow-x: hidden;
+  font-family: 'Pokemon Solid, sans-serif' ;
 }
 
 body::before {
@@ -18,6 +17,105 @@ body::before {
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 0.7; 
+  opacity: 0.7;
   z-index: -1;
+}
+.battle-container {
+  display: flex;
+  justify-content: space-between;
+  gap: 40px;
+  padding: 20px;
+  flex-wrap: wrap;
+}
+
+.player-card {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.player-label {
+  height: 80px;
+  width: auto;
+}
+
+.pokemon-img {
+  height: 220px;
+  margin-top: 20px;
+}
+
+.stat-card {
+  width: 300px;
+  height: 140px;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.pokemon-name {
+  text-transform: uppercase;
+  font-family: 'Pokemon Solid', sans-serif;
+  font-size: 18px;
+  word-break: break-word;
+}
+
+.pokemon-stat {
+  font-family: 'Pokemon Solid', sans-serif;
+  text-transform: uppercase;
+}
+
+.hp-bar-container {
+  width: 100%;
+  background-color: #ddd;
+  height: 20px;
+  border-radius: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.hp-bar-fill {
+  background-color: green;
+  height: 100%;
+  transition: width 0.5s ease-in-out;
+  border-radius: 10px;
+}
+
+.attack-options {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vs-text {
+  align-self: center;
+}
+
+.win-screen {
+  text-align: center;
+  padding: 30px;
+}
+
+@media (max-width: 768px) {
+  .battle-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .pokemon-img {
+    height: 180px;
+  }
+
+  .stat-card {
+    width: 90%;
+  }
+
+  .vs-text {
+    margin: 20px 0;
+  }
+
+  .attack-options button {
+    width: 80%;
+  }
 }

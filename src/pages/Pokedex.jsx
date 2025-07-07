@@ -1,4 +1,5 @@
-import { useState } from 'react';
+// Pokedex.jsx
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Card from '@mui/material/Card';
@@ -9,162 +10,185 @@ import Button from '@mui/material/Button';
 import CatchingPokemonIcon from '@mui/icons-material/CatchingPokemon';
 import TextField from '@mui/material/TextField';
 import SearchIcon from '@mui/icons-material/Search';
-import "../Battle.css"
+import "../Battle.css";
+import "../Pokedex.css"; 
 
 export default function Pokedex() {
   const [input1, setInput1] = useState('');
   const [input2, setInput2] = useState('');
   const [team1, setTeam1] = useState([]);
   const [team2, setTeam2] = useState([]);
+  const [allPokemonNames, setAllPokemonNames] = useState([]);
+  const [suggestions1, setSuggestions1] = useState([]);
+  const [suggestions2, setSuggestions2] = useState([]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchAllPokemonNames = async () => {
+      try {
+        const res = await axios.get('https://pokeapi.co/api/v2/pokemon?limit=10000');
+        const names = res.data.results.map(p => p.name);
+        setAllPokemonNames(names);
+      } catch (err) {
+        console.error('Failed to load Pokémon names');
+      }
+    };
+    fetchAllPokemonNames();
+  }, []);
+
   const handleBattle = () => {
-    console.log('Navigating to battle page...');
-    navigate('/battle', {
-      state: {
-        team1,
-        team2,
-      },
-    });
+    navigate('/battle', { state: { team1, team2 } });
   };
 
-  const handleAdd = async (team, setTeam, input, setInput) => {
+  const handleAdd = async (team, setTeam, input, setInput, setSuggestions) => {
     if (!input || team.length >= 3) return;
-
     try {
       const res = await axios.get(`https://pokeapi.co/api/v2/pokemon/${input.toLowerCase()}`);
       const data = res.data;
-      console.log(data);
       const newPokemon = {
         name: data.name,
         image: data.sprites.front_default,
-        image2:data.sprites.back_default,
+        image2: data.sprites.back_default,
         abilities: data.abilities,
         defense: data.stats.find(stat => stat.stat.name === "defense").base_stat,
-        moves : data.moves,
+        moves: data.moves,
       };
-
       setTeam([...team, newPokemon]);
       setInput('');
-    } catch (err) {
+      setSuggestions([]);
+    } catch {
       alert('Pokémon not found!');
     }
   };
 
-  return (  
-  <>
-  <div style={{ textAlign: 'center', flex: 1 }}>
-    <img src="https://fontmeme.com/permalink/250520/fd5a7fbba7a9bcd4829a7f5acbfb2ae4.png" alt="pokemon-font" border="0"/>
-  </div>
-  <div
-    style={{
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-      padding: '20px',
-      gap: '40px',
-    }}
-  >
-    {/* TEAM 1 */}
-    <div style={{ textAlign: 'center', flex: 1 , marginLeft:'100px'}}>
-      <h1 style={{ fontFamily: "'Pokemon Solid', sans-serif" }}>TEAM 1</h1>
-      {team1.length < 3 && (
-        <div>
-          <TextField
-          style={{border: '2px solid black'}}
-            type="text"
-            variant="outlined" 
-            placeholder="Enter Pokémon name"
-            value={input1}
-            onChange={(e) => setInput1(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === 'Enter' && handleAdd(team1, setTeam1, input1, setInput1)
-            }
-          />
-          <br /><br />
-          <Button style={{border: '2px solid black'}} variant="contained" endIcon={<SearchIcon/>} onClick={() => handleAdd(team1, setTeam1, input1, setInput1)}>
-            Choose
-          </Button>
-          <br /><br />
+  const renderSuggestions = (suggestions, setInput, setSuggestions) => (
+    <div className="suggestion-box">
+      {suggestions.map((name, idx) => (
+        <div
+          key={idx}
+          onClick={() => {
+            setInput(name);
+            setSuggestions([]);
+          }}
+          className="suggestion-item"
+        >
+          {name}
         </div>
-      )}
-      <div style={{ display: 'flex', gap: '20px', justifyContent: 'flex-start' }}>
-        {team1.map((p, i) => (
-          <div> 
-            <img src={p.image} alt={p.name} style={{height:'200px',marginTop:'10px'}}/>
-            <Card 
-            key={p.name}
-            style= {{textAlign: 'center',height:'100px',width:'200px'}} sx={{ maxWidth: 345 }}>
-              <CardActionArea>
-                <CardContent>
-                  <Typography gutterBottom variant="h5" component="div" style={{textTransform: 'uppercase',fontFamily: "'Pokemon Solid', sans-serif"}}>
-                    {p.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }} style={{textTransform: 'uppercase',fontFamily: "'Pokemon Solid', sans-serif"}}>
-                    Defense : {p.defense}
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
-            </Card>
+      ))}
+    </div>
+  );
+
+  const renderCard = (p) => (
+    <div key={p.name} className="pokemon-card">
+      <img src={p.image} alt={p.name} className="pokemon-img" />
+      <Card className="card-box">
+        <CardActionArea>
+          <CardContent>
+            <Typography
+              gutterBottom
+              variant="h5"
+              component="div"
+              style={{
+                textTransform: 'uppercase',
+                fontFamily: "'Pokemon Solid', sans-serif",
+                fontSize: p.name.length > 10 ? '14px' : '18px',
+                wordBreak: 'break-word',
+                lineHeight: '1.2',
+              }}
+            >
+              {p.name}
+            </Typography>
+            <Typography
+              variant="body2"
+              style={{
+                textTransform: 'uppercase',
+                fontFamily: "'Pokemon Solid', sans-serif"
+              }}
+            >
+              Defense: {p.defense}
+            </Typography>
+          </CardContent>
+        </CardActionArea>
+      </Card>
+    </div>
+  );
+
+  return (
+    <>
+      <div style={{ textAlign: 'center' }}>
+        <img src="https://fontmeme.com/permalink/250520/fd5a7fbba7a9bcd4829a7f5acbfb2ae4.png" alt="pokemon-font" />
+      </div>
+
+      <div className="pokedex-container">
+        {/* Team 1 */}
+        <div className="team-container">
+          <h1 className="team-heading">TEAM 1</h1>
+          <p className="team-subheading">Choose your 3 Pokémons</p>
+          {team1.length < 3 && (
+            <div>
+              <div className="input-wrapper">
+                <TextField
+                  variant="outlined"
+                  placeholder="Enter Pokémon name"
+                  value={input1}
+                  onChange={(e) => {
+                    const val = e.target.value.toLowerCase();
+                    setInput1(val);
+                    setSuggestions1(allPokemonNames.filter(name => name.startsWith(val)).slice(0, 5));
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAdd(team1, setTeam1, input1, setInput1, setSuggestions1)}
+                />
+                {suggestions1.length > 0 && renderSuggestions(suggestions1, setInput1, setSuggestions1)}
+              </div>
+              <Button variant="contained" style={{ marginTop: '10px' }} endIcon={<SearchIcon />}
+                onClick={() => handleAdd(team1, setTeam1, input1, setInput1, setSuggestions1)}>
+                Choose
+              </Button>
             </div>
-        ))}
-      </div>
-    </div>
+          )}
+          <div className="card-list">{team1.map(renderCard)}</div>
+        </div>
 
-    {/* TEAM 2 */}
-    <div style={{ textAlign: 'center', flex: 1 ,marginRight:'100px'}}>
-      <h1 style={{ fontFamily: "'Pokemon Solid', sans-serif" }}>TEAM 2</h1>
-      {team2.length < 3 && (
-        <div>
-          <TextField
-            type="text"
-            style={{border: '2px solid black'}}
-            placeholder="Enter Pokémon name"
-            value={input2}
-            onChange={(e) => setInput2(e.target.value)}
-            onKeyDown={(e) =>
-              e.key === 'Enter' && handleAdd(team2, setTeam2, input2, setInput2)
-            }
-          />
-          <br /><br />
-          <Button style={{border: '2px solid black'}} variant="contained" endIcon={<SearchIcon/>} onClick={() => handleAdd(team2, setTeam2, input2, setInput2)}>
-            Choose
+        {/* Team 2 */}
+        <div className="team-container">
+          <h1 className="team-heading">TEAM 2</h1>
+          <p className="team-subheading">Choose your 3 Pokémons</p>
+          {team2.length < 3 && (
+            <div>
+              <div className="input-wrapper">
+                <TextField
+                  variant="outlined"
+                  placeholder="Enter Pokémon name"
+                  value={input2}
+                  onChange={(e) => {
+                    const val = e.target.value.toLowerCase();
+                    setInput2(val);
+                    setSuggestions2(allPokemonNames.filter(name => name.startsWith(val)).slice(0, 5));
+                  }}
+                  onKeyDown={(e) => e.key === 'Enter' && handleAdd(team2, setTeam2, input2, setInput2, setSuggestions2)}
+                />
+                {suggestions2.length > 0 && renderSuggestions(suggestions2, setInput2, setSuggestions2)}
+              </div>
+              <Button variant="contained" style={{ marginTop: '10px' }} endIcon={<SearchIcon />}
+                onClick={() => handleAdd(team2, setTeam2, input2, setInput2, setSuggestions2)}>
+                Choose
+              </Button>
+            </div>
+          )}
+          <div className="card-list">{team2.map(renderCard)}</div>
+        </div>
+      </div>
+
+      {(team1.length === 3 && team2.length === 3) && (
+        <div className="battle-btn-container">
+          <Button variant="outlined" color="error"
+            style={{ fontSize: '70px', fontFamily: "Pokemon Solid, sans-serif"}}
+            startIcon={<CatchingPokemonIcon style={{ fontSize: '70px' }} />}
+            onClick={handleBattle}>
+            BATTLE
           </Button>
-          <br /><br />
         </div>
       )}
-      <div style={{ display: 'flex', gap: '20px', justifyContent: 'flex-end'}}>
-        {team2.map((p, i) => (
-          <div>
-          <img src={p.image} alt={p.name} style={{height:'200px',marginTop:'10px'}}/>
-          <Card 
-           key={p.name}
-          style= {{textAlign: 'center',height:'100px',width:'200px'}} sx={{ maxWidth: 345 }}>
-              <CardActionArea>
-                <CardContent>
-                  <Typography gutterBottom variant="h5" component="div" style={{textTransform: 'uppercase',fontFamily: "'Pokemon Solid', sans-serif" }}>
-                    {p.name}
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'text.secondary' }} style={{textTransform: 'uppercase',fontFamily: "'Pokemon Solid', sans-serif"}}>
-                    Defense : {p.defense}
-                  </Typography>
-                </CardContent>
-              </CardActionArea>
-            </Card>
-          </div>
-        ))}
-      </div>
-    </div>
-    <br />
-  </div>
-  {(team2.length===3 && team1.length===3 ) && <div style={{ display: 'flex', justifyContent: 'center',marginTop: '20px'}}>
-     <Button variant="outlined" color="error" 
-     style={{height:'100px', width: '400px', fontSize:'50px',fontFamily: "'Pokemon Solid', sans-serif"}} 
-     startIcon={<CatchingPokemonIcon style={{ fontSize: '60px' }}/>}
-     onClick= {handleBattle} 
-     >BATTLE</Button>
-  </div>
-  }
-  </>
-);
-
+    </>
+  );
 }
